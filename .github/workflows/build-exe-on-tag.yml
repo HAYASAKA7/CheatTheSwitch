@@ -1,0 +1,44 @@
+name: Build EXE on Tag
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-exe:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller tkinterdnd2
+
+      - name: Build EXE
+        run: |
+          pyinstaller --noconfirm --clean --windowed --onefile --name CheatSplitter --collect-all tkinterdnd2 cheat_splitter_app.py
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CheatSplitter-${{ github.ref_name }}-windows
+          path: dist/CheatSplitter.exe
+          if-no-files-found: error
+
+      - name: Upload EXE to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/CheatSplitter.exe
+          generate_release_notes: true
